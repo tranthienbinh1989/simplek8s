@@ -1,35 +1,27 @@
 sudo: required
 services:
   - docker
-
 before_install:
-  - docker build -t stephengrider/react-test -f ./client/Dockerfile.dev ./client
-
+  - curl https://sdk.cloud.google.come | bash > /dev/null;
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  - gcloud components update kubectl
+  - gcloud auth active-service-acccount --key-file service-account.json
+  - gcloud config set project simplek8s-250520
+  - gcloud config set compute/zone us-central1-a
+  - gcloud container clusters get-credentials example-k8s
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t tranthienbinh/react-test -f ./client/Dockerfile.dev ./client
 script:
-  - docker run stephengrider/react-test npm test -- --coverage
-
-after_success:
-  - docker build -t stephengrider/multi-client ./client
-  - docker build -t stephengrider/multi-nginx ./nginx
-  - docker build -t stephengrider/multi-server ./server
-  - docker build -t stephengrider/multi-worker ./worker
-  # Log in to the docker CLI
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
-  # Take those images and push them to docker hub
-  - docker push stephengrider/multi-client
-  - docker push stephengrider/multi-nginx
-  - docker push stephengrider/multi-server
-  - docker push stephengrider/multi-worker
+  - docker run -e CI=true tranthienbinh/react-test npm run test
 
 deploy:
-  provider: elasticbeanstalk
-  region: us-west-1
-  app: multi-docker
-  env: MultiDocker-env
-  bucket_name: elasticbeanstalk-us-west-1-306476627547
-  bucket_path: docker-multi
+  provider: script
+  script: bash ./deploy.sh
   on:
     branch: master
-  access_key_id: $AWS_ACCESS_KEY
-  secret_access_key:
-    secure: $AWS_SECRET_KEY
+
+env:
+  global:
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK__CORE_DISABLE_PROMPTS=1
+    secure: "vkoBzcpme6Etc7QhRfyn+oeBneYYuLAuc/mpquWDbTL4gX122V/2tse750VjnjYcgJoEPc5uaRdfRR5tDiZDMrU3WfkapjewtB1EK36RXDPiyPuIzPKVLTeVlQ1Tc0VPU7Zju+VGYUsbLkPA45VpnmsrQ7bWLx5QMK7nSRCsuOz+sYJMI6UCsxFfQnPWkrB7x+uitf95wooyt6dUzF1n1CfnrIuZw0EYaWUERmuDJrKp1r/ti60qrAcybGz0FlHz5id0u+pS7yWt8gWlIua7MBB48U0u7Mcjf2jzpN+OMYTxdeKEMIHKPSBd+WsRzym8YDOvSnLISNm+WipQnlO2nUU+4pPASMR/TzPMtzRCGeB6fbSgdXb19QawQgAM6P03uFkK3J0elYX0Ljw8ybQ667ciovzUgEUuNRyPcaEhJhRtPavV9GEG8UDksgp52zA0eYVMaN9Ft694o9Ay2Z3j6VkTw86fUw6bsD0xHNKWf3GeXN7NPhaiAkElDYDmdB0pf3s0tk5hXzyNgIX5ZT/WkHsOXKY5DhvcjlGYWayjOPRoFgqLJzI/O7cXG8hYJ/G1SJKc1XzONP7Do1EMEK0WBNEZCOG9mOut8j8hBTdoUcI+OqbLQvy9uTY9CZTVELJ1FmNgZYmNT3NLl4jNizo1lFIGAj7Djuw9urNHeEFT29Y="
