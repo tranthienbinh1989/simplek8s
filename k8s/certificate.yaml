@@ -11,7 +11,7 @@ spec:
   dnsNames:
     - btran.dev
     - www.btran.dev
-  acms:
+  acme:
     config:
       - http01:
           ingressClass: nginx
