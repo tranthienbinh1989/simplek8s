@@ -5,7 +5,7 @@ docker push tranthienbinh/multi-client:latest
 docker push tranthienbinh/multi-server:latest
 docker push tranthienbinh/multi-worker:latest
 
-ocker push tranthienbinh/multi-client:$SHA
+docker push tranthienbinh/multi-client:$SHA
 docker push tranthienbinh/multi-server:$SHA
 docker push tranthienbinh/multi-worker:$SHA
 
